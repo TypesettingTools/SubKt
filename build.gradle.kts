@@ -50,9 +50,9 @@ dependencies {
     implementation("org.apache.pdfbox", "fontbox", "2.0.21")
 
     implementation("com.google.code.gson", "gson", "2.8.6")
-    implementation("io.ktor", "ktor-client-cio", "1.3.2")
-    implementation("io.ktor", "ktor-client-gson", "1.3.2")
-    implementation("io.ktor", "ktor-client-auth-jvm", "1.3.2")
+    implementation("io.ktor", "ktor-client-cio", "1.4.0")
+    implementation("io.ktor", "ktor-client-gson", "1.4.0")
+    implementation("io.ktor", "ktor-client-auth-jvm", "1.4.0")
     implementation("commons-net", "commons-net", "3.6")
     implementation("commons-io", "commons-io", "2.7")
     implementation("com.jcraft", "jsch", "0.1.55")
