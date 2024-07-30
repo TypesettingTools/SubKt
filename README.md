@@ -1,3 +1,11 @@
+# SubKt Maintenance Fork
+Skip to [Table of Contents](#table-of-contents) for the original readme.
+
+This is a fork of [Myaamori's SubKt](https://github.com/Myaamori/SubKt) that applies some basic patches to keep it from breaking due to bitrot.
+There likely will not be any significant development here unless somebody willing to maintain it comes along.
+
+To migrate an existing SubKt project to this fork, open the project's `gradle.properties` file, replace the `subktRepo` value with `https://github.com/TypesettingTools/SubKt.git`,
+and the `subktVersion` value with this repository's current latest tag (e.g. `0.1.20` at the time of writing).
 
 # Table of Contents
 
