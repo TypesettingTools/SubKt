@@ -18,7 +18,7 @@ gradlePlugin {
 }
 
 group = "myaa"
-version = "0.1.19"
+version = "0.1.21"
 
 repositories {
     mavenCentral()
