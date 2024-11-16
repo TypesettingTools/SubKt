@@ -7,6 +7,7 @@ import org.apache.fontbox.ttf.*
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
+import java.util.stream.IntStream
 import kotlin.math.abs
 
 private data class Arg(val arg: String?)
@@ -152,18 +153,20 @@ private class Font(val fontFile: File, val font: TrueTypeFont) {
         }
     }
 
+    fun IntStream.collectCodePointsToString(): String =
+            this.collect(::StringBuilder, { sb, codePoint -> sb.appendCodePoint(codePoint) }, { a, b -> a.append(b) }).toString()
+
     fun missingGlyphs(s: String) =
             font.cmap.getSubtable(
                     CmapTable.PLATFORM_WINDOWS,
                     CmapTable.ENCODING_WIN_UNICODE_BMP)?.let { unicodeTable ->
                 val extended = font.cmap.getSubtable(CmapTable.PLATFORM_WINDOWS,
                         CmapTable.ENCODING_WIN_UNICODE_FULL)
-                s.filter {
-                    val codepoint = it.toInt()
+                s.codePoints().filter { codepoint ->
                     val glyphId = unicodeTable.getGlyphId(codepoint)
                     val extendedId = extended?.getGlyphId(codepoint) ?: 0
                     glyphId == 0 && extendedId == 0
-                }
+                }.collectCodePointsToString()
             } ?: font.cmap.getSubtable(
                     CmapTable.PLATFORM_WINDOWS,
                     CmapTable.ENCODING_WIN_SYMBOL)?.let { symbolTable ->
