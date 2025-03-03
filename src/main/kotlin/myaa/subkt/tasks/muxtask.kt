@@ -1011,10 +1011,12 @@ open class Mux : PropertyTask() {
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .start()
+
+        val output = proc.inputStream.bufferedReader().readText();
+
         val result = proc.waitFor()
         if (result != 0) {
-            val error = proc.inputStream.bufferedReader().readText()
-            throw RuntimeException("mkvmerge failed:\n$error")
+            throw RuntimeException("mkvmerge failed:\n$output")
         }
 
         val oldcrc = calculateCRC(tempLocation)
