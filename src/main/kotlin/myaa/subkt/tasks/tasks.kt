@@ -1726,10 +1726,10 @@ private class SSLSessionReuseFTPSClient(implicit: Boolean) : FTPSClient(implicit
                 method.setAccessible(true)
                 method.invoke(cache, String.format("%s:%s", socket.getInetAddress()
                         .hostName, socket.getPort().toString())
-                        .toLowerCase(Locale.ROOT), session)
+                        .lowercase(Locale.ROOT), session)
                 method.invoke(cache, String.format("%s:%s", socket.getInetAddress()
                         .hostAddress, socket.getPort().toString())
-                        .toLowerCase(Locale.ROOT), session)
+                        .lowercase(Locale.ROOT), session)
             } else {
                 throw error("Invalid SSL Session")
             }

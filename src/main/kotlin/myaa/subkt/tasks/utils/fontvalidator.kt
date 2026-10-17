@@ -202,10 +202,10 @@ private class FontCollection(fontFiles: Iterable<File>) {
         }
     }
 
-    val byFullName = fonts.flatMap { font -> font.exactNames.map { it.toLowerCase() to font } }.toMap()
+    val byFullName = fonts.flatMap { font -> font.exactNames.map { it.lowercase() to font } }.toMap()
 
     val byFamilyName = fonts
-            .flatMap { font -> font.families.map { it.toLowerCase() to font } }
+            .flatMap { font -> font.families.map { it.lowercase() to font } }
             .groupBy({ it.first }, { it.second })
 
     private val cache = mutableMapOf<State, FontMatch>()
@@ -227,7 +227,7 @@ private class FontCollection(fontFiles: Iterable<File>) {
             }
 
     fun match(state: State): FontMatch {
-        val s = state.copy(font = state.font.toLowerCase(), drawing = false)
+        val s = state.copy(font = state.font.lowercase(), drawing = false)
 
         return when (val f = cache[s]) {
             null -> {
