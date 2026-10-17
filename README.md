@@ -217,14 +217,15 @@ ftppass=password
 
 To use SubKt you will need:
 
-* A [recent version of the JDK](https://www.oracle.com/uk/java/technologies/javase-downloads.html)
+* A [JDK](https://www.oracle.com/java/technologies/downloads/), Java 11–24 (tested on Java 11, 14, 15, and 24). The included wrapper downloads Gradle 8.14.6 automatically.
 * [mkvmerge](https://mkvtoolnix.download/downloads.html)
 
 Ensure that both `java` and `mkvmerge` are available on the PATH.
-Instructions for setting the PATH for JDK 14 on Windows can be found [here](https://docs.oracle.com/en/java/javase/14/install/installation-jdk-microsoft-windows-platforms.html#GUID-96EB3876-8C7A-4A25-9F3A-A2983FEC016A).
+Set `JAVA_HOME` to your JDK installation and add its `bin` directory to the PATH.
 The same procedure can be used to add `mkvmerge` to the PATH; take note of where you installed/extracted it.
 
-Download the [project template](https://github.com/Myaamori/SubKt/releases/download/0.1.19/subkt-template-0.1.19.zip) and place the files in the directory where you keep your project files.
+Use the files in the [`template`](template) directory for new projects. Older release archives contain an obsolete Gradle wrapper and do not include this JDK upgrade.
+Until this upgrade is released, use a local SubKt checkout as described below, passing `--include-build /absolute/path/to/SubKt` when running the template's wrapper.
 After you have modified `build.gradle.kts` and `sub.properties` as needed, you can run tasks using `gradlew`.
 For instance, to run the `mux` task for episode `03`, navigate to the same directory as the `build.gradle.kts` file in a terminal, and run `./gradlew mux.03`.
 On Windows, simply run `gradlew mux.03` from `cmd.exe`.
@@ -232,14 +233,22 @@ On Windows, simply run `gradlew mux.03` from `cmd.exe`.
 **Note**: The first time you run `gradlew` may take some time as Gradle as well as all dependencies need to be downloaded.
 Future runs will be much quicker.
 
+## Working alongside older projects
+
+The updated SubKt source and template use Gradle 8.14.6 on Java 11–24. Collaborators can run the same project's `gradlew` with different supported Java installations, without editing the wrapper configuration or installing another JDK. The wrapper downloads Gradle and verifies its SHA-256 checksum.
+
+Keep older projects on their existing SubKt and wrapper versions. For an updated project, copy both launchers and the `gradle/wrapper` directory from the template and select the updated SubKt source. Until this upgrade is released, use `--include-build` as described below; the template's default `subktVersion=0.1.19` still selects the old release. Gradle 8.14.6 cannot run on Java 25 or newer.
+
 ## Building and using a local checkout
 
 Initialize the bundled torrent library, then build with the installed JDK:
 
 ```sh
 git submodule update --init --recursive
-./gradlew build
+./gradlew build compileSamplesKotlin
 ```
+
+Build plugins come from the Gradle Plugin Portal and dependencies from Maven Central; JCenter is no longer used. Java and Kotlin compile to Java 11 bytecode without downloading a separate JDK. Kotlin dependencies match the host Gradle's embedded Kotlin runtime, and Kotlin language/API version 2.0 keeps the plugin readable by Gradle 8.14's Kotlin DSL compiler.
 
 To use this checkout from the included template:
 
@@ -251,7 +260,16 @@ cd template
 
 For a template copied elsewhere, pass `--include-build /absolute/path/to/SubKt`. Gradle substitutes the local checkout for the `myaa:subkt` dependency, including uncommitted changes. Keep `subktRepo` and `subktVersion` configured: without `--include-build`, they select the Git repository and version as usual.
 
+Run `./gradlew dokka` to generate Markdown API documentation in `build/dokka/gfm`. The checked-in documentation is not overwritten.
+
 Projects using FTPS with `sslSessionReuse` enabled also need the two `--add-opens` JVM arguments in the template's `gradle.properties`. They allow the existing session-reuse implementation to access the JDK's SSL session cache on Java 17+. Merge these arguments into any existing `org.gradle.jvmargs` setting.
+
+The compatibility workflow builds the plugin and samples, runs the functional tests, generates documentation, and loads the template on Java 11, 14, 15, and 24. Select a supported JDK with `JAVA_HOME`, then run:
+
+```sh
+./gradlew build compileSamplesKotlin dokka
+./template/gradlew -p template --include-build "$PWD" tasks --all
+```
 
 # Manual
 
