@@ -63,6 +63,8 @@ dependencies {
     implementation("commons-codec:commons-codec:1.14")
 
     "samplesImplementation"(sourceSets["main"].output)
+    testImplementation(gradleTestKit())
+    testImplementation(kotlin("test-junit", embeddedKotlinVersion))
 }
 
 // Keep the plugin usable on Java 11–16 with Gradle 8.14 as well as modern Gradle.
