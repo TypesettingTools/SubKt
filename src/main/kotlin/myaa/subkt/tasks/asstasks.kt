@@ -10,6 +10,8 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.listProperty
 import org.gradle.kotlin.dsl.property
+import org.gradle.process.ExecOperations
+import javax.inject.Inject
 import java.awt.Color
 import java.io.File
 import java.lang.reflect.Type
@@ -701,7 +703,10 @@ object ASSColorSerializer : JsonSerializer<Color> {
  *
  * @sample myaa.subkt.tasks.samples.automationSample
  */
-open class Automation : DefaultTask(), SubTask {
+abstract class Automation : DefaultTask(), SubTask {
+    @get:Inject
+    protected abstract val execOperations: ExecOperations
+
     /**
      * Name of Aegisub CLI binary, or path to it if it is not in your PATH.
      */
@@ -947,7 +952,7 @@ open class Automation : DefaultTask(), SubTask {
 
         println(args)
 
-        project.exec { spec ->
+        execOperations.exec { spec ->
             spec.commandLine(args)
         }
     }
