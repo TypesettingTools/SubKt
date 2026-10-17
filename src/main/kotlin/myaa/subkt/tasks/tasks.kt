@@ -660,7 +660,7 @@ abstract class PropertyTask : DefaultTask(), SubTask {
  *
  * @sample myaa.subkt.tasks.samples.torrentSample
  */
-open class Torrent : AbstractArchiveTask(), SubTask {
+abstract class Torrent : AbstractArchiveTask(), SubTask {
     /**
      * A list of trackers to add to the torrent.
      */
@@ -2127,25 +2127,25 @@ open class DefaultSubTask : DefaultTask(), SubTask
  * Wrapper task for [Copy] which implements [SubTask], giving access to
  * [SubTask.item] and [SubTask.batchItems] for convenience.
  */
-open class SubCopy : Copy(), SubTask
+abstract class SubCopy : Copy(), SubTask
 
 /**
  * Wrapper task for [Exec] which implements [SubTask], giving access to
  * [SubTask.item] and [SubTask.batchItems] for convenience.
  */
-open class SubExec : Exec(), SubTask
+abstract class SubExec : Exec(), SubTask
 
 /**
  * Wrapper task for [Sync] which implements [SubTask], giving access to
  * [SubTask.item] and [SubTask.batchItems] for convenience.
  */
-open class SubSync : Sync(), SubTask
+abstract class SubSync : Sync(), SubTask
 
 /**
  * Wrapper task for [Zip] which implements [SubTask], giving access to
  * [SubTask.item] and [SubTask.batchItems] for convenience.
  */
-open class SubZip : Zip(), SubTask
+abstract class SubZip : Zip(), SubTask
 
 /**
  * Set the property to the given value.
