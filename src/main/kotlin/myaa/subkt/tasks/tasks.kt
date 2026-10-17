@@ -211,7 +211,7 @@ abstract class ItemGroupContext {
      * @param T The type of the item contained in the [ProviderGroup].
      * @param action A closure operating on a [ValueClosure].
      */
-    fun <T> provider(action: ValueClosure<*>.() -> T) =
+    fun <T : Any> provider(action: ValueClosure<*>.() -> T) =
             ProviderGroup(subs, action).also { group ->
                 entries.get().forEach {
                     group.registerItemMaybe(it, isBatch(it), episodes(it))
@@ -537,7 +537,7 @@ class ValueClosure<T>(
      * Searches for the given property and returns it as a single element of the given type.
      * See [Task.getAs].
      */
-    inline fun <reified T> getAs(propertyName: String) =
+    inline fun <reified T : Any> getAs(propertyName: String) =
             taskGroup.subs.getAs<T>(propertyName, entry = entry, context = ClosureContext())
 
     /**
@@ -568,7 +568,7 @@ class ValueGroup<T>(subs: Subs, val action: ValueClosure<T>.() -> T) :
  * A [Provider] is generated for each entry, and the given closure
  * is evaluated when the provider's value is requested.
  */
-class ProviderGroup<T>(subs: Subs, val action: ValueClosure<*>.() -> T) :
+class ProviderGroup<T : Any>(subs: Subs, val action: ValueClosure<*>.() -> T) :
         ItemGroup<Provider<T>>(subs) {
     override fun createItem(entry: String, isBatch: Boolean, episodes: List<String>): Provider<T> =
             subs.project.provider {
@@ -579,7 +579,7 @@ class ProviderGroup<T>(subs: Subs, val action: ValueClosure<*>.() -> T) :
 /**
  * Returns a [Property] with a default value set.
  */
-inline fun <reified T> Task.defaultProperty(default: T): Property<T> =
+inline fun <reified T : Any> Task.defaultProperty(default: T): Property<T> =
         project.objects.property<T>().convention(default)
 
 /**
@@ -2150,17 +2150,17 @@ open class SubZip : Zip(), SubTask
 /**
  * Set the property to the given value.
  */
-operator fun <T> Property<T>.invoke(value: T) = set(value)
+operator fun <T : Any> Property<T>.invoke(value: T) = set(value)
 
 /**
  * Set the property to the result of the given [Provider], evaluated lazily.
  */
-operator fun <T> Property<T>.invoke(provider: Provider<T>) = set(provider)
+operator fun <T : Any> Property<T>.invoke(provider: Provider<T>) = set(provider)
 
 /**
  * Set the property to the result of the given closure, evaluated lazily.
  */
-operator fun <T> Property<T>.invoke(call: () -> T) = set(DefaultProvider(call))
+operator fun <T : Any> Property<T>.invoke(call: () -> T) = set(DefaultProvider(call))
 
 /**
  * Set the file property to the output of the given task, evaluated lazily.
@@ -2183,28 +2183,28 @@ operator fun ConfigurableFileCollection.invoke(files: Any) = setFrom(files)
 /**
  * Adds all specified items to the list property.
  */
-operator fun <T> HasMultipleValues<T>.invoke(vararg items: T) = addAll(*items)
+operator fun <T : Any> HasMultipleValues<T>.invoke(vararg items: T) = addAll(*items)
 
 /**
  * Adds all specified items to the list property.
  */
-operator fun <T> HasMultipleValues<T>.invoke(items: Iterable<T>) = addAll(items)
+operator fun <T : Any> HasMultipleValues<T>.invoke(items: Iterable<T>) = addAll(items)
 
 /**
  * Adds the output of the given [Provider] to the list property, evaluated lazily.
  */
-operator fun <T> HasMultipleValues<T>.invoke(items: Provider<out Iterable<T>>) = addAll(items)
+operator fun <T : Any> HasMultipleValues<T>.invoke(items: Provider<out Iterable<T>>) = addAll(items)
 
 /**
  * Adds the output of the given closure to the list property, evaluated lazily.
  */
-operator fun <T> HasMultipleValues<T>.invoke(call: () -> Iterable<T>) =
+operator fun <T : Any> HasMultipleValues<T>.invoke(call: () -> Iterable<T>) =
         addAll(DefaultProvider(call))
 
 /**
  * Adds all specified key/value pairs to the map property.
  */
-inline operator fun <K, reified V> MapProperty<K, V>.invoke(vararg pairs: Pair<K, Any>) =
+inline operator fun <K : Any, reified V : Any> MapProperty<K, V>.invoke(vararg pairs: Pair<K, Any>) =
         pairs.forEach { (k, v) ->
             when (v) {
                 is Provider<*> -> put(k, v as Provider<V>)
@@ -2215,17 +2215,17 @@ inline operator fun <K, reified V> MapProperty<K, V>.invoke(vararg pairs: Pair<K
 /**
  * Adds all items in the specified map to the map property.
  */
-operator fun <K, V> MapProperty<K, V>.invoke(map: Map<K, V>) = putAll(map)
+operator fun <K : Any, V : Any> MapProperty<K, V>.invoke(map: Map<K, V>) = putAll(map)
 
 /**
  * Adds the items of the output of the given [Provider] to the map property, evaluated lazily.
  */
-operator fun <K, V> MapProperty<K, V>.invoke(map: Provider<out Map<K, V>>) = putAll(map)
+operator fun <K : Any, V : Any> MapProperty<K, V>.invoke(map: Provider<out Map<K, V>>) = putAll(map)
 
 /**
  * Adds the items of the output of the given closure to the map property, evaluated lazily.
  */
-operator fun <K, V> MapProperty<K, V>.invoke(call: () -> Map<K, V>) = putAll(DefaultProvider(call))
+operator fun <K : Any, V : Any> MapProperty<K, V>.invoke(call: () -> Map<K, V>) = putAll(DefaultProvider(call))
 
 /**
  * Converts a string to the specified type.
