@@ -65,12 +65,9 @@ dependencies {
 }
 
 tasks {
-    compileKotlin {
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         kotlinOptions.jvmTarget = "1.8"
         kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
     }
 
     val dokka by getting(DokkaTask::class) {
