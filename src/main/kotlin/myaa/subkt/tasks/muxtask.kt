@@ -768,7 +768,7 @@ open class Mux : PropertyTask() {
      *
      * @sample myaa.subkt.tasks.samples.muxAttachSample
      * @param dirs A directory, collection of directories, or a single file
-     * @param action A closure operating on a [ConfigurableAttachment] instance,
+     * @param action A closure operating on a [ConfigurableFileTree] instance,
      * allowing you to filter what files to include.
      */
     fun attach(vararg dirs: Any, action: ConfigurableFileTree.() -> Unit = {}):
