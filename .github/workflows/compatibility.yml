@@ -14,8 +14,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['11', '14', '15', '24']
-    name: Java ${{ matrix.java }} / Gradle 8.14.6
+        include:
+          - java: '11'
+            gradle: '8.14.6'
+          - java: '14'
+            gradle: '8.14.6'
+          - java: '15'
+            gradle: '8.14.6'
+          - java: '24'
+            gradle: '9.8.1'
+          - java: '27'
+            gradle: '9.8.1'
+    name: Java ${{ matrix.java }} / Gradle ${{ matrix.gradle }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -25,5 +35,28 @@ jobs:
           distribution: zulu
           java-version: ${{ matrix.java }}
       - uses: gradle/actions/setup-gradle@v6
+      - run: python3 tests/wrapper_compatibility.py ${{ matrix.java }} ${{ matrix.gradle }}
       - run: ./gradlew build compileSamplesKotlin dokka --console=plain
       - run: ./template/gradlew -p template --include-build "$PWD" tasks --all --console=plain
+
+  windows-wrapper:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - java: '11'
+            gradle: '8.14.6'
+          - java: '14'
+            gradle: '8.14.6'
+          - java: '27'
+            gradle: '9.8.1'
+    name: Windows launcher / Java ${{ matrix.java }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v6
+      - run: python tests/wrapper_compatibility.py ${{ matrix.java }} ${{ matrix.gradle }}
