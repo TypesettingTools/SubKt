@@ -97,6 +97,32 @@ if exist "%JAVA_EXE%" goto execute
 goto exitWithErrorLevel
 
 :execute
+@rem SubKt chooses Gradle for the installed Java without changing either properties file.
+set SUBKT_JAVA_VERSION=
+@rem The outer quotes protect the redirection until the nested command runs.
+for /f "tokens=1,2,3" %%a in ('""%JAVA_EXE%" -XshowSettings:properties -version 2>&1"') do if "%%a"=="java.specification.version" set "SUBKT_JAVA_VERSION=%%c"
+set SUBKT_WRAPPER_JAR=gradle-wrapper.jar
+if "%SUBKT_JAVA_VERSION%"=="11" goto legacyWrapper
+if "%SUBKT_JAVA_VERSION%"=="12" goto legacyWrapper
+if "%SUBKT_JAVA_VERSION%"=="13" goto legacyWrapper
+if "%SUBKT_JAVA_VERSION%"=="14" goto legacyWrapper
+if "%SUBKT_JAVA_VERSION%"=="15" goto legacyWrapper
+if "%SUBKT_JAVA_VERSION%"=="16" goto legacyWrapper
+@rem Reject missing, non-numeric, and pre-11 versions before using numeric comparison.
+if not defined SUBKT_JAVA_VERSION goto unsupportedJava
+for /f "delims=0123456789" %%v in ("%SUBKT_JAVA_VERSION%") do goto unsupportedJava
+if %SUBKT_JAVA_VERSION% LSS 17 goto unsupportedJava
+goto launchWrapper
+
+:unsupportedJava
+1>&2 echo ERROR: SubKt requires JDK 11 or newer. Detected version: %SUBKT_JAVA_VERSION%
+"%COMSPEC%" /c exit 1
+goto exitWithErrorLevel
+
+:legacyWrapper
+set SUBKT_WRAPPER_JAR=gradle-wrapper-legacy.jar
+
+:launchWrapper
 @rem Setup the command line
 
 
@@ -104,7 +130,7 @@ goto exitWithErrorLevel
 @rem Execute gradlew
 @rem endlocal doesn't take effect until after the line is parsed and variables are expanded
 @rem which allows us to clear the local environment before executing the java command
-endlocal & "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -jar "%APP_HOME%\gradle\wrapper\gradle-wrapper.jar" %* & call :exitWithErrorLevel & goto exitWithErrorLevel
+endlocal & "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -jar "%APP_HOME%\gradle\wrapper\%SUBKT_WRAPPER_JAR%" %* & call :exitWithErrorLevel & goto exitWithErrorLevel
 
 @rem This label must not be changed. We rely on old scripts being able to jump to this point.
 :exitWithErrorLevel

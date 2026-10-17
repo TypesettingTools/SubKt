@@ -199,6 +199,19 @@ if "$cygwin" || "$msys" ; then
 fi
 
 
+# SubKt supports collaborators using either old or new Java installations.
+# Keep both wrapper configurations immutable so switching JDKs never changes Git files.
+SUBKT_JAVA_VERSION=$( "$JAVACMD" -XshowSettings:properties -version 2>&1 |
+    sed -n 's/^[[:space:]]*java.specification.version = //p' |
+    tr -d '\r' )
+case $SUBKT_JAVA_VERSION in
+    11|12|13|14|15|16) SUBKT_WRAPPER_JAR=gradle-wrapper-legacy.jar ;;
+    ''|*[!0-9]*) die "Could not detect a supported Java version. SubKt requires JDK 11 or newer." ;;
+    *)
+        [ "$SUBKT_JAVA_VERSION" -ge 17 ] || die "SubKt requires JDK 11 or newer (found Java $SUBKT_JAVA_VERSION)."
+        SUBKT_WRAPPER_JAR=gradle-wrapper.jar ;;
+esac
+
 # Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
 
@@ -210,7 +223,7 @@ DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
 
 set -- \
         "-Dorg.gradle.appname=$APP_BASE_NAME" \
-        -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
+        -jar "$APP_HOME/gradle/wrapper/$SUBKT_WRAPPER_JAR" \
         "$@"
 
 # Stop when "xargs" is not available.
