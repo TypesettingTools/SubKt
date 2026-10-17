@@ -217,7 +217,7 @@ ftppass=password
 
 To use SubKt you will need:
 
-* A [JDK](https://www.oracle.com/java/technologies/downloads/), Java 11–24 (tested on Java 11, 14, 15, and 24). The included wrapper downloads Gradle 8.14.6 automatically.
+* A [JDK](https://www.oracle.com/java/technologies/downloads/), Java 11–27 (tested on Java 11, 14, 15, 24, and 27). The included `gradlew` selects and downloads a compatible Gradle version automatically.
 * [mkvmerge](https://mkvtoolnix.download/downloads.html)
 
 Ensure that both `java` and `mkvmerge` are available on the PATH.
@@ -235,9 +235,22 @@ Future runs will be much quicker.
 
 ## Working alongside older projects
 
-The updated SubKt source and template use Gradle 8.14.6 on Java 11–24. Collaborators can run the same project's `gradlew` with different supported Java installations, without editing the wrapper configuration or installing another JDK. The wrapper downloads Gradle and verifies its SHA-256 checksum.
+Collaborators using Java 11–16 and Java 27 can use the same updated project checkout and run the same commands (`./gradlew` on macOS/Linux, `gradlew` on Windows). The launcher checks the Java selected by `JAVA_HOME`, or `PATH` when `JAVA_HOME` is unset, and chooses:
 
-Keep older projects on their existing SubKt and wrapper versions. For an updated project, copy both launchers and the `gradle/wrapper` directory from the template and select the updated SubKt source. Until this upgrade is released, use `--include-build` as described below; the template's default `subktVersion=0.1.19` still selects the old release. Gradle 8.14.6 cannot run on Java 25 or newer.
+| Installed Java | Gradle downloaded and run |
+| --- | --- |
+| 11–16 | 8.14.6 |
+| 17–27 | 9.8.1 |
+
+No additional JDK, manual Gradle installation, or per-user project edits are needed. Selection does not modify either wrapper configuration. Each Gradle distribution is cached after its first download, with its SHA-256 checksum verified on installation.
+
+You can keep Java 11, 14, or 15 as your default and leave existing projects on their existing SubKt and Gradle versions. The new launchers only affect projects that contain them; they do not change your default Java or upgrade older projects.
+
+When updating a shared project, the maintainer must update its SubKt version and copy **both launchers and the entire `gradle/wrapper` directory** from the template. This includes `gradle-wrapper-legacy.jar` and `gradle-wrapper-legacy.properties`, alongside the regular wrapper files. Both JARs are identical, unmodified Gradle wrapper binaries; the different filenames let Gradle load the appropriate properties file without rewriting it. Commit all six files so collaborators get the same automatic selection. While these changes are unreleased, use `--include-build` as described below; the template's default `subktVersion=0.1.19` still selects the old release.
+
+The consuming project's launcher selects Gradle for SubKt too, including when SubKt is built from Git or through `--include-build`; SubKt's own launcher is only used when you invoke it directly. Build scripts shared by both groups must use APIs available in Gradle 8.14 as well as Gradle 9.8.
+
+IDE integrations that bypass `gradlew` do not perform this selection. Configure those locally with Gradle 8.14.6 on Java 11–16, or Gradle 9.8.1 on Java 17–27; alternatively, run the project's launcher in a terminal. Avoid putting a Java home override in the shared `~/.gradle/gradle.properties`, since that affects other projects.
 
 ## Building and using a local checkout
 
@@ -248,7 +261,7 @@ git submodule update --init --recursive
 ./gradlew build compileSamplesKotlin
 ```
 
-Build plugins come from the Gradle Plugin Portal and dependencies from Maven Central; JCenter is no longer used. Java and Kotlin compile to Java 11 bytecode without downloading a separate JDK. Kotlin dependencies match the host Gradle's embedded Kotlin runtime, and Kotlin language/API version 2.0 keeps the plugin readable by Gradle 8.14's Kotlin DSL compiler.
+The launcher automatically selects Gradle for your installed JDK. Build plugins come from the Gradle Plugin Portal and dependencies from Maven Central; JCenter is no longer used. Java and Kotlin compile to Java 11 bytecode without downloading a separate JDK. Kotlin dependencies match the host Gradle's embedded Kotlin runtime, and Kotlin language/API version 2.0 keeps the plugin readable by Gradle 8.14's Kotlin DSL compiler.
 
 To use this checkout from the included template:
 
@@ -258,18 +271,27 @@ cd template
 ./gradlew --include-build .. mux.03
 ```
 
-For a template copied elsewhere, pass `--include-build /absolute/path/to/SubKt`. Gradle substitutes the local checkout for the `myaa:subkt` dependency, including uncommitted changes. Keep `subktRepo` and `subktVersion` configured: without `--include-build`, they select the Git repository and version as usual.
+For a template copied elsewhere, pass `--include-build /absolute/path/to/SubKt`. Gradle substitutes the local checkout for the `myaa:subkt` dependency, including uncommitted changes. Keep `subktRepo` and `subktVersion` configured: without `--include-build`, they select the Git repository and version as usual. The old release selected by the template does not contain this upgrade.
 
 Run `./gradlew dokka` to generate Markdown API documentation in `build/dokka/gfm`. The checked-in documentation is not overwritten.
 
 Projects using FTPS with `sslSessionReuse` enabled also need the two `--add-opens` JVM arguments in the template's `gradle.properties`. They allow the existing session-reuse implementation to access the JDK's SSL session cache on Java 17+. Merge these arguments into any existing `org.gradle.jvmargs` setting.
 
-The compatibility workflow builds the plugin and samples, runs the functional tests, generates documentation, and loads the template on Java 11, 14, 15, and 24. Select a supported JDK with `JAVA_HOME`, then run:
+The compatibility workflow exercises the launchers, builds the plugin and samples, runs the functional tests, generates documentation, and loads the template on Java 11, 14, 15, 24, and 27. It also checks the Windows launcher on Java 11, 14, and 27. To reproduce a build lane locally, select its JDK with `JAVA_HOME`, then run the same commands:
 
 ```sh
 ./gradlew build compileSamplesKotlin dokka
 ./template/gradlew -p template --include-build "$PWD" tasks --all
 ```
+
+The launcher regression checks need Python 3, which is only a test dependency:
+
+```sh
+# With Java 11 selected (use 14/8.14.6, 15/8.14.6, 24/9.8.1, or 27/9.8.1 for the other lanes):
+python3 tests/wrapper_compatibility.py 11 8.14.6
+```
+
+When regenerating the wrapper, preserve the Java-selection changes in `gradlew` and `gradlew.bat`, synchronize the copies in `template`, and keep the two JARs identical. Update each distribution's properties and checksum together, and update the stock-JAR checksum in the regression checks if the wrapper binary changes.
 
 # Manual
 
