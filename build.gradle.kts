@@ -1,11 +1,12 @@
 import java.net.URI
-import java.net.URL
-import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.dokka.gradle.formats.DokkaFormatPlugin
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "2.4.21"
     `java-gradle-plugin`
-    id("org.jetbrains.dokka") version "0.9.18"
+    id("org.jetbrains.dokka") version "2.2.0"
 }
 
 gradlePlugin {
@@ -40,8 +41,9 @@ sourceSets {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8", "1.3.72"))
-    implementation(kotlin("reflect", "1.3.72"))
+    // Use the host Gradle's Kotlin runtime, including 2.0.21 on Gradle 8.14.
+    implementation(kotlin("stdlib", embeddedKotlinVersion))
+    implementation(kotlin("reflect", embeddedKotlinVersion))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
     implementation(gradleApi())
     implementation(gradleKotlinDsl())
@@ -63,44 +65,62 @@ dependencies {
     "samplesImplementation"(sourceSets["main"].output)
 }
 
-tasks {
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        kotlinOptions.jvmTarget = "1.8"
-        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+// Keep the plugin usable on Java 11–16 with Gradle 8.14 as well as modern Gradle.
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+        // Gradle 8.14's Kotlin DSL compiler must be able to read our metadata.
+        languageVersion.set(KotlinVersion.KOTLIN_2_0)
+        apiVersion.set(KotlinVersion.KOTLIN_2_0)
     }
+}
 
-    val dokka by getting(DokkaTask::class) {
-        outputFormat = "gfm"
-        outputDirectory = "docs"
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(11)
+}
 
-        // configuration {
-        noStdlibLink = false
-        noJdkLink = false
-        jdkVersion = 9
-        //platform = "JVM"
+// Dokka v2 ships HTML/Javadoc formats; retain the existing Markdown output too.
+abstract class DokkaGfmPlugin : DokkaFormatPlugin("gfm")
+apply<DokkaGfmPlugin>()
 
-        includes = listOf("src/docs/markdown/packages.md")
-        samples = listOf("src/samples/kotlin/tasks.kt")
+dependencies {
+    add("dokkaGfmPlugin", "org.jetbrains.dokka:gfm-plugin:2.2.0")
+}
 
-        externalDocumentationLink {
-            url = URL("https://docs.gradle.org/current/javadoc/")
-        }
-
-        externalDocumentationLink {
-            url = URL("https://velocity.apache.org/engine/2.2/apidocs/")
-        }
-
-        packageOptions/*perPackageOption*/ {
-            prefix = "com.turn.ttorrent"
-            suppress = true
-        }
-
-        linkMapping {
-            // replace \ with / since only unix paths are allowed
-            dir = project.file("src/main/kotlin").absolutePath.replace('\\', '/')
-            url = "https://github.com/Myaamori/SubKt/blob/$version/src/main/kotlin"
-            suffix = "#L"
-        }
-        // }
+dokka {
+    dokkaPublications.named("gfm") {
+        outputDirectory.set(layout.buildDirectory.dir("dokka/gfm"))
     }
+    dokkaSourceSets.named("main") {
+        jdkVersion.set(11)
+        includes.from("src/docs/markdown/packages.md")
+        samples.from("src/samples/kotlin/tasks.kt")
+        externalDocumentationLinks.register("gradle") {
+            url.set(URI("https://docs.gradle.org/current/javadoc/"))
+            packageListUrl.set(URI("https://docs.gradle.org/current/javadoc/element-list"))
+        }
+        externalDocumentationLinks.register("velocity") {
+            url.set(URI("https://velocity.apache.org/engine/2.2/apidocs/"))
+        }
+        perPackageOption {
+            matchingRegex.set("com\\.turn\\.ttorrent.*")
+            suppress.set(true)
+        }
+        sourceLink {
+            localDirectory.set(file("src/main/kotlin"))
+            remoteUrl.set(URI("https://github.com/Myaamori/SubKt/blob/$version/src/main/kotlin"))
+            remoteLineSuffix.set("#L")
+        }
+    }
+}
+
+tasks.register("dokka") {
+    group = "documentation"
+    description = "Generates Markdown API documentation."
+    dependsOn("dokkaGeneratePublicationGfm")
 }
