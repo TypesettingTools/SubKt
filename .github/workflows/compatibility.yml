@@ -1,0 +1,29 @@
+name: Gradle and Java compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['11', '14', '15', '24']
+    name: Java ${{ matrix.java }} / Gradle 8.14.6
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v6
+      - run: ./gradlew build compileSamplesKotlin dokka --console=plain
+      - run: ./template/gradlew -p template --include-build "$PWD" tasks --all --console=plain
