@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
@@ -436,7 +437,7 @@ open class Discord : DefaultTask(), SubTask {
      * A file to send with the message. At least one of [attachment], [content]
      * or [embed] is required.
      */
-    @get:Input
+    @get:InputFile
     @get:Optional
     val attachment = project.objects.fileProperty()
 
