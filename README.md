@@ -232,6 +232,25 @@ On Windows, simply run `gradlew mux.03` from `cmd.exe`.
 **Note**: The first time you run `gradlew` may take some time as Gradle as well as all dependencies need to be downloaded.
 Future runs will be much quicker.
 
+## Building and using a local checkout
+
+Initialize the bundled torrent library, then build with the installed JDK:
+
+```sh
+git submodule update --init --recursive
+./gradlew build
+```
+
+To use this checkout from the included template:
+
+```sh
+cd template
+./gradlew --include-build .. tasks --all
+./gradlew --include-build .. mux.03
+```
+
+For a template copied elsewhere, pass `--include-build /absolute/path/to/SubKt`. Gradle substitutes the local checkout for the `myaa:subkt` dependency, including uncommitted changes. Keep `subktRepo` and `subktVersion` configured: without `--include-build`, they select the Git repository and version as usual.
+
 # Manual
 
 A detailed description of the different tasks, functions and classes provided can be found in [the documentation](docs/subkt/index.md).
