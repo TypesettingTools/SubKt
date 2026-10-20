@@ -27,6 +27,5 @@ pluginManagement {
 buildscript {
     repositories {
         mavenCentral()
-        jcenter()
     }
 }
