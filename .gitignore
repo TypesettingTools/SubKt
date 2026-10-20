@@ -11,3 +11,6 @@ misc/
 
 # Ignore Gradle build output directory
 build
+
+# Kotlin compiler cache
+.kotlin

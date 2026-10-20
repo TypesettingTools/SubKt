@@ -44,7 +44,7 @@ interface Filterable {
  * Filter files by file extension. Case-insensitive.
  */
 fun PatternFilterable.includeExtensions(vararg extensions: String) {
-    include { it.file.extension.toLowerCase() in extensions }
+    include { it.file.extension.lowercase() in extensions }
 }
 
 /**
@@ -972,7 +972,7 @@ open class Mux : PropertyTask() {
 
         // attachments
         toAttach.forEach {
-            val mime = mimeTypes[it.extension.toLowerCase()]
+            val mime = mimeTypes[it.extension.lowercase()]
             logger.lifecycle("Attaching ${it.name} (content-type: ${mime ?: "autodetected"})")
             mime?.let {
                 yield("--attachment-mime-type")

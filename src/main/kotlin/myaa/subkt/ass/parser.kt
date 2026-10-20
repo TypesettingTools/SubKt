@@ -757,9 +757,9 @@ enum class Collisions(val value: String) {
 
 class CollisionsSerializer : ASSSerializer<Collisions> {
     override fun deserialize(s: String) =
-            when (s.toLowerCase()) {
-                Collisions.NORMAL.value.toLowerCase() -> Collisions.NORMAL
-                Collisions.REVERSE.value.toLowerCase() -> Collisions.REVERSE
+            when (s.lowercase()) {
+                Collisions.NORMAL.value.lowercase() -> Collisions.NORMAL
+                Collisions.REVERSE.value.lowercase() -> Collisions.REVERSE
                 else -> error("Invalid value for Collisions: $s")
             }
 
