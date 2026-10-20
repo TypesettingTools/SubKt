@@ -343,7 +343,7 @@ fun Task.get(propertyName: String) =
  * @sample myaa.subkt.tasks.samples.taskGetAsSample
  * @param propertyName The property to find.
  */
-inline fun <reified T> Task.getAs(propertyName: String) =
+inline fun <reified T : Any> Task.getAs(propertyName: String) =
         taskGroup.subs.getAs<T>(propertyName, entry = entry, context = TaskContext(this))
 
 /**
@@ -668,7 +668,7 @@ open class Subs(val project: Project) : ItemGroupContext() {
      * @param propertyName The property to find.
      * @param entry Optional manually specified entry for property lookup.
      */
-    inline fun <reified T> getAs(propertyName: String, entry: String = "",
+    inline fun <reified T : Any> getAs(propertyName: String, entry: String = "",
                                  context: AbstractContext? = null) =
             get(propertyName, entry = entry, context = context).map { it.asType<T>() }
 

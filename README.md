@@ -251,6 +251,8 @@ cd template
 
 For a template copied elsewhere, pass `--include-build /absolute/path/to/SubKt`. Gradle substitutes the local checkout for the `myaa:subkt` dependency, including uncommitted changes. Keep `subktRepo` and `subktVersion` configured: without `--include-build`, they select the Git repository and version as usual.
 
+Projects using FTPS with `sslSessionReuse` enabled also need the two `--add-opens` JVM arguments in the template's `gradle.properties`. They allow the existing session-reuse implementation to access the JDK's SSL session cache on Java 17+. Merge these arguments into any existing `org.gradle.jvmargs` setting.
+
 # Manual
 
 A detailed description of the different tasks, functions and classes provided can be found in [the documentation](docs/subkt/index.md).
