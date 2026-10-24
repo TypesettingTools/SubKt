@@ -246,7 +246,13 @@ No additional JDK, manual Gradle installation, or per-user project edits are nee
 
 You can keep Java 11, 14, or 15 as your default and leave existing projects on their existing SubKt and Gradle versions. The new launchers only affect projects that contain them; they do not change your default Java or upgrade older projects.
 
-When updating a shared project, the maintainer must update its SubKt version and copy **both launchers and the entire `gradle/wrapper` directory** from the template. This includes `gradle-wrapper-legacy.jar` and `gradle-wrapper-legacy.properties`, alongside the regular wrapper files. Both JARs are identical, unmodified Gradle wrapper binaries; the different filenames let Gradle load the appropriate properties file without rewriting it. Commit all six files so collaborators get the same automatic selection. While these changes are unreleased, use `--include-build` as described below; the template's default `subktVersion=0.1.19` still selects the old release.
+When updating a shared project, the maintainer must update its SubKt version and copy **`gradlew`, `gradlew.bat`, and the entire `gradle` directory** from the template. Also add this line after the `plugins` block in the project's `build.gradle.kts`:
+
+```kotlin
+apply(from = "gradle/wrapper-tasks.gradle.kts")
+```
+
+Commit these files together. The root scripts select Java-compatible launchers under `gradle/launchers`; those nested scripts are unmodified output from Gradle's wrapper generator. The two JARs under `gradle/wrapper` are identical stock binaries; their different filenames select different properties files. The applied script directs wrapper regeneration to the nested launchers, keeping the root dispatchers safe. **Keep that `apply` line while using these dispatchers.** While these changes are unreleased, use `--include-build` as described below; the template's default `subktVersion=0.1.19` still selects the old release.
 
 The consuming project's launcher selects Gradle for SubKt too, including when SubKt is built from Git or through `--include-build`; SubKt's own launcher is only used when you invoke it directly. Build scripts shared by both groups must use APIs available in Gradle 8.14 as well as Gradle 9.8.
 
@@ -291,7 +297,17 @@ The launcher regression checks need Python 3, which is only a test dependency:
 python3 tests/wrapper_compatibility.py 11 8.14.6
 ```
 
-When regenerating the wrapper, preserve the Java-selection changes in `gradlew` and `gradlew.bat`, synchronize the copies in `template`, and keep the two JARs identical. Update each distribution's properties and checksum together, and update the stock-JAR checksum in the regression checks if the wrapper binary changes.
+To regenerate the wrappers in SubKt or a consuming project, select a supported JDK 17 or newer and run:
+
+```sh
+./gradlew updateWrappers
+```
+
+This generates both nested launcher pairs, leaving the root dispatchers intact. In the SubKt repository it also synchronizes the template; consuming projects only regenerate their own launchers. The task is provided by the applied `gradle/wrapper-tasks.gradle.kts` script. Regeneration requires Gradle 9 so that both JARs use the modern bootstrap; attempts from the Java 11–16 path fail before writing files. Ordinary builds still work with Java 11–16.
+
+Distribution versions and checksums live in the two `gradle/wrapper/*.properties` files. To upgrade, edit the relevant URL and SHA-256 checksum together, then regenerate. The generator comes from the modern Gradle distribution selected by those files. Update the stock-JAR checksum in the regression checks if that binary changes. The checks also regenerate the nested launchers to verify that they match the checked-in files and that the root dispatchers survive unchanged.
+
+When legacy Java support is retired, remove the dispatchers and the wrapper-task configuration, delete the legacy files, and generate a standard modern wrapper at the project root.
 
 # Manual
 
