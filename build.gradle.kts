@@ -9,6 +9,23 @@ plugins {
     id("org.jetbrains.dokka") version "2.2.0"
 }
 
+apply(from = "gradle/wrapper-tasks.gradle.kts")
+
+val syncTemplateWrappers = tasks.register<Copy>("syncTemplateWrappers") {
+    group = "build setup"
+    description = "Copies the regenerated launchers into the template."
+    dependsOn("wrapper", "legacyWrapper")
+    from(projectDir) {
+        include("gradlew", "gradlew.bat", "gradle/launchers/**",
+            "gradle/wrapper/**", "gradle/wrapper-tasks.gradle.kts")
+    }
+    into("template")
+}
+
+tasks.named("updateWrappers") {
+    dependsOn(syncTemplateWrappers)
+}
+
 gradlePlugin {
     plugins {
         create("subPlugin") {

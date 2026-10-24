@@ -10,6 +10,8 @@ plugins {
     id("myaa.subkt")
 }
 
+apply(from = "gradle/wrapper-tasks.gradle.kts")
+
 subs {
     readProperties("sub.properties")
     episodes(getList("episodes"))

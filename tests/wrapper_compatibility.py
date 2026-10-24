@@ -17,6 +17,11 @@ ROOT = Path(__file__).resolve().parents[1]
 WRAPPER_FILES = [
     "gradlew",
     "gradlew.bat",
+    "gradle/wrapper-tasks.gradle.kts",
+    "gradle/launchers/gradlew-modern",
+    "gradle/launchers/gradlew-modern.bat",
+    "gradle/launchers/gradlew-legacy",
+    "gradle/launchers/gradlew-legacy.bat",
     "gradle/wrapper/gradle-wrapper.jar",
     "gradle/wrapper/gradle-wrapper.properties",
     "gradle/wrapper/gradle-wrapper-legacy.jar",
@@ -59,7 +64,10 @@ def main():
             shutil.copy2(ROOT / "template" / name, target)
         original = {name: (project / name).read_bytes() for name in WRAPPER_FILES}
         (project / "settings.gradle").write_text("rootProject.name = 'wrapper-test'\n")
+        (project / "gradle.properties").write_text("systemProp.subkt.wrapper.projectOpt=project-value\n")
         (project / "build.gradle").write_text("""
+apply from: 'gradle/wrapper-tasks.gradle.kts'
+
 tasks.register('verifyWrapper') {
     doLast {
         assert gradle.gradleVersion == providers.gradleProperty('expectedGradle').get()
@@ -67,6 +75,7 @@ tasks.register('verifyWrapper') {
         assert providers.gradleProperty('message').get() == 'argument with spaces'
         assert System.getProperty('subkt.wrapper.javaOpt') == 'java-value'
         assert System.getProperty('subkt.wrapper.gradleOpt') == 'gradle-value'
+        assert System.getProperty('subkt.wrapper.projectOpt') == 'project-value'
         println 'WRAPPER_VERIFIED'
     }
 }
@@ -101,8 +110,35 @@ tasks.register('failWrapper') {
         env.pop("JAVA_HOME", None)
         assert "WRAPPER_VERIFIED" in run(project, env, *arguments)
         assert "EXPECTED_WRAPPER_FAILURE" in run(project, env, "failWrapper", success=False)
+        if int(java_version) >= 17:
+            # Regeneration must be reproducible and must never overwrite dispatchers.
+            run(project, env, "updateWrappers", "--offline")
+            assert "WRAPPER_VERIFIED" in run(project, env, *arguments)
+        else:
+            # The old Gradle must not replace the modern bootstrap with its own.
+            assert "Regenerate wrappers using Java 17 or newer" in run(
+                project, env, "updateWrappers", "--offline", success=False
+            )
+        assert not (project / "template").exists(), "Consumer update created a template directory"
+        invalid_env = dict(env, JAVA_HOME=str(Path(temporary) / "missing java"))
+        assert "JAVA_HOME" in run(project, invalid_env, *arguments, success=False)
+        if os.name != "nt":
+            link = Path(temporary) / "linked gradlew"
+            link.symlink_to(project / "gradlew")
+            result = subprocess.run(
+                [str(link), "-p", str(project), "--console=plain", *arguments],
+                cwd=temporary, env=env, text=True, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            assert result.returncode == 0 and "WRAPPER_VERIFIED" in result.stdout, result.stdout
         for name, data in original.items():
-            assert (project / name).read_bytes() == data, name + " was modified"
+            actual = (project / name).read_bytes()
+            if name.startswith("gradle/launchers/") or name.endswith(".properties"):
+                # Git may check out text as CRLF on Windows; Gradle chooses its
+                # own line endings when regenerating these files.
+                actual = actual.replace(b"\r\n", b"\n")
+                data = data.replace(b"\r\n", b"\n")
+            assert actual == data, name + " was modified"
     print("Wrapper checks passed for Java " + java_version, flush=True)
 
 
