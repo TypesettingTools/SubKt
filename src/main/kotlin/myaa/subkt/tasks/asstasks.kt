@@ -602,16 +602,11 @@ open class Swap : ASSTask() {
     @get:Input
     val delimiter = project.objects.property<String>().convention("*")
 
-    // patterns borrowed from https://github.com/TypesettingTools/CoffeeFlux-Aegisub-Scripts/blob/3e9efc865cf719589d55a49b6981e98e0ef6fc6b/macros/Flux.DialogSwapper.moon#L130
-    private val patterns = delimiter.map { delim ->
+    // patterns originally borrowed from https://github.com/TypesettingTools/CoffeeFlux-Aegisub-Scripts/blob/3e9efc865cf719589d55a49b6981e98e0ef6fc6b/macros/Flux.DialogSwapper.moon#L130
+    // matched in a single pass so the output of one swap can't be picked up by another
+    private val pattern = delimiter.map { delim ->
         val esc = Regex.escape(delim)
-        listOf(
-                Regex("""\{$esc\}([^{]*)\{$esc([^}]*)\}""")
-                        to "{$delim}$2{$delim$1}",
-                Regex("""\{$esc$esc([^}]+)\}""")
-                        to "{$delim}$1{$delim}",
-                Regex("""\{$esc\}\{$esc""") to "{$delim$delim"
-        )
+        Regex("""\{$esc\}([^{]*)\{$esc([^}]*)\}|\{$esc$esc([^}]+)\}""")
     }
 
     /**
@@ -640,8 +635,17 @@ open class Swap : ASSTask() {
             }
 
             if (styleMatches) {
-                patterns.get().forEach { (pattern, replacement) ->
-                    line.text = pattern.replace(line.text, replacement)
+                val delim = delimiter.get()
+                line.text = pattern.get().replace(line.text) { match ->
+                    val (shown, swapped, hidden) = match.destructured
+                    when {
+                        // {**foo} -> {*}foo{*}
+                        match.groups[3] != null -> "{$delim}$hidden{$delim}"
+                        // {*}foo{*} -> {**foo}
+                        swapped.isEmpty() -> "{$delim$delim$shown}"
+                        // {*}foo{*bar} -> {*}bar{*foo}
+                        else -> "{$delim}$swapped{$delim$shown}"
+                    }
                 }
             }
         }
